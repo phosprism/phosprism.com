@@ -3889,8 +3889,10 @@ img {
     clip-path: inset(0 0 0 0);
   }
 }
-/* ローディング中はトップのキャッチコピーの演出を止めておき、画面が消えてから流す */
+/* ローディング中と閉じる演出の間はトップのキャッチコピーの演出を止めておき、画面が消えてから流す */
 .is-loading .hero-catchphrase-text,
-.is-loading .hero-catchphrase-line::after {
+.is-loading .hero-catchphrase-line::after,
+.loader-exit .hero-catchphrase-text,
+.loader-exit .hero-catchphrase-line::after {
   animation-play-state: paused;
 }

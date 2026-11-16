@@ -115,7 +115,9 @@ const repeatedName = Array.from({ length: 7 }, () => member.nameEn);
       gsap.set(reveals, { opacity: 0 });
 
       // ローディング画面が出ている間は止めておき、画面が消え始めたら演出を始める
-      const waitForLoader = document.documentElement.classList.contains('is-loading');
+      const loaderClasses = document.documentElement.classList;
+      const waitForLoader =
+        loaderClasses.contains('is-loading') || loaderClasses.contains('loader-exit');
       const timeline = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: waitForLoader });
       if (waitForLoader)
         document.addEventListener('site-loader:exit', () => timeline.play(), { once: true });

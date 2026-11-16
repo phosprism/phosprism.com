@@ -121,7 +121,8 @@ const slides: { src: string; mobile?: string }[] = [
     };
 
     // ローディング画面が出ている間は、スライドの切り替えを始めない
-    if (document.documentElement.classList.contains('is-loading'))
+    const loaderClasses = document.documentElement.classList;
+    if (loaderClasses.contains('is-loading') || loaderClasses.contains('loader-exit'))
       document.addEventListener('site-loader:exit', startSlideshow, { once: true });
     else startSlideshow();
     window.addEventListener('pagehide', stopSlideshow);

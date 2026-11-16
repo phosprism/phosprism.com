@@ -189,8 +189,11 @@ const currentPageLabel =
             closed = true;
             root.classList.remove('is-loading');
             root.classList.add('loader-exit');
-            document.dispatchEvent(new Event('site-loader:exit'));
-            window.setTimeout(() => root.classList.remove('loader-exit'), 1150);
+            // 閉じる演出（文字が抜けて画面がめくれる、約1.05秒）が終わってから、ページのアニメーションを始めさせる
+            window.setTimeout(() => {
+              root.classList.remove('loader-exit');
+              document.dispatchEvent(new Event('site-loader:exit'));
+            }, 1080);
           };
           const minimum = root.classList.contains('loader-quick') ? 1000 : 1700;
           const closeAfterMinimum = () =>
@@ -469,7 +472,10 @@ const currentPageLabel =
         });
         // ローディング画面が出ている間は入場アニメーションを始めず、画面が消え始めたときに始める
         const whenLoaderDone = (callback: () => void) => {
-          if (animationRoot.classList.contains('is-loading'))
+          if (
+            animationRoot.classList.contains('is-loading') ||
+            animationRoot.classList.contains('loader-exit')
+          )
             document.addEventListener('site-loader:exit', callback, { once: true });
           else callback();
         };
