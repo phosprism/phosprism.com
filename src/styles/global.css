@@ -1251,16 +1251,13 @@ img {
   .header {
     justify-content: space-between;
     gap: 0;
-    background: rgba(5, 5, 5, 0.96);
+    /* 背景のぼかし（backdrop-filter）はスクロールのたびに描き直しが走って重いので、不透明の背景にする */
+    background: #050505;
     border-bottom: 1px solid #ffffff1f;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
   }
   .home-body .header {
     background: transparent;
     border-bottom: 0;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
   .desktop-nav {
     display: none;
@@ -2290,15 +2287,12 @@ img {
 
 @media (min-width: 761px) {
   .header {
-    background: rgba(5, 5, 5, 0.92);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    /* 背景のぼかし（backdrop-filter）はスクロールのたびに描き直しが走って重いので、不透明の背景にする */
+    background: #050505;
   }
   .home-body .header {
     background: transparent;
     border-bottom: 0;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
   .desktop-nav {
     gap: 18px;
