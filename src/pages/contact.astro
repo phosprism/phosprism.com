@@ -129,46 +129,47 @@ import SiteLayout from '../layouts/SiteLayout.astro';
       </form>
     </section>
   </main>
-</SiteLayout>
 
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer
+  ></script>
 
-<script>
-  const form = document.querySelector<HTMLFormElement>('.contact-form');
-  const inputStep = form?.querySelector<HTMLElement>('.contact-input-step');
-  const confirmStep = form?.querySelector<HTMLElement>('.contact-confirm-step');
-  const confirmButton = form?.querySelector<HTMLButtonElement>('.contact-confirm-button');
-  const editButton = form?.querySelector<HTMLButtonElement>('.contact-edit-button');
+  <script>
+    const form = document.querySelector<HTMLFormElement>('.contact-form');
+    const inputStep = form?.querySelector<HTMLElement>('.contact-input-step');
+    const confirmStep = form?.querySelector<HTMLElement>('.contact-confirm-step');
+    const confirmButton = form?.querySelector<HTMLButtonElement>('.contact-confirm-button');
+    const editButton = form?.querySelector<HTMLButtonElement>('.contact-edit-button');
 
-  const showInputStep = () => {
-    if (!inputStep || !confirmStep) return;
-    confirmStep.hidden = true;
-    inputStep.hidden = false;
-    inputStep.querySelector<HTMLElement>('input, select, textarea')?.focus();
-  };
+    const showInputStep = () => {
+      if (!inputStep || !confirmStep) return;
+      confirmStep.hidden = true;
+      inputStep.hidden = false;
+      inputStep.querySelector<HTMLElement>('input, select, textarea')?.focus();
+    };
 
-  const showConfirmStep = () => {
-    if (!form || !inputStep || !confirmStep || !form.reportValidity()) return;
+    const showConfirmStep = () => {
+      if (!form || !inputStep || !confirmStep || !form.reportValidity()) return;
 
-    confirmStep.querySelectorAll<HTMLElement>('[data-confirm]').forEach((output) => {
-      const field = form.elements.namedItem(
-        form.querySelector<HTMLElement>(`#${output.dataset.confirm}`)?.getAttribute('name') || '',
-      ) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
-      output.textContent = field?.value || '';
+      confirmStep.querySelectorAll<HTMLElement>('[data-confirm]').forEach((output) => {
+        const field = form.elements.namedItem(
+          form.querySelector<HTMLElement>(`#${output.dataset.confirm}`)?.getAttribute('name') || '',
+        ) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
+        output.textContent = field?.value || '';
+      });
+
+      inputStep.hidden = true;
+      confirmStep.hidden = false;
+      confirmStep.focus({ preventScroll: true });
+      confirmStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    confirmButton?.addEventListener('click', showConfirmStep);
+    editButton?.addEventListener('click', showInputStep);
+    form?.addEventListener('submit', (event) => {
+      if (confirmStep?.hidden) {
+        event.preventDefault();
+        showConfirmStep();
+      }
     });
-
-    inputStep.hidden = true;
-    confirmStep.hidden = false;
-    confirmStep.focus({ preventScroll: true });
-    confirmStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  confirmButton?.addEventListener('click', showConfirmStep);
-  editButton?.addEventListener('click', showInputStep);
-  form?.addEventListener('submit', (event) => {
-    if (confirmStep?.hidden) {
-      event.preventDefault();
-      showConfirmStep();
-    }
-  });
-</script>
+  </script>
+</SiteLayout>

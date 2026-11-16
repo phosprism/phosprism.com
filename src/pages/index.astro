@@ -47,78 +47,83 @@ const slides: { src: string; mobile?: string }[] = [
       </h1>
     </div>
   </main>
-</SiteLayout>
 
-<script>
-  import gsap from 'gsap';
+  <script>
+    import gsap from 'gsap';
 
-  const slides = gsap.utils.toArray<HTMLImageElement>('.hero-slide');
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const slideInterval = 5.2;
-  let current = 0;
-  let slideshowCall: gsap.core.Tween | undefined;
+    const slides = gsap.utils.toArray<HTMLImageElement>('.hero-slide');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slideInterval = 5.2;
+    let current = 0;
+    let slideshowCall: gsap.core.Tween | undefined;
 
-  const stopSlideshow = () => {
-    slideshowCall?.kill();
-    slideshowCall = undefined;
-    gsap.killTweensOf(slides);
-  };
+    const stopSlideshow = () => {
+      slideshowCall?.kill();
+      slideshowCall = undefined;
+      gsap.killTweensOf(slides);
+    };
 
-  // 2枚目以降のスライドは、表示する少し前に1枚ずつ読み込む
-  const loadSlide = (slide: HTMLImageElement | undefined) => {
-    if (!slide?.hasAttribute('data-deferred-image')) return;
-    slide.parentElement?.querySelectorAll<HTMLSourceElement>('source[data-srcset]').forEach((source) => {
-      source.srcset = source.dataset.srcset ?? '';
-      source.removeAttribute('data-srcset');
-    });
-    if (slide.dataset.src) {
-      slide.src = slide.dataset.src;
-      slide.removeAttribute('data-src');
-    }
-    slide.removeAttribute('data-deferred-image');
-  };
-  const loadNextSlide = () => loadSlide(slides[(current + 1) % slides.length]);
+    // 2枚目以降のスライドは、表示する少し前に1枚ずつ読み込む
+    const loadSlide = (slide: HTMLImageElement | undefined) => {
+      if (!slide?.hasAttribute('data-deferred-image')) return;
+      slide.parentElement
+        ?.querySelectorAll<HTMLSourceElement>('source[data-srcset]')
+        .forEach((source) => {
+          source.srcset = source.dataset.srcset ?? '';
+          source.removeAttribute('data-srcset');
+        });
+      if (slide.dataset.src) {
+        slide.src = slide.dataset.src;
+        slide.removeAttribute('data-src');
+      }
+      slide.removeAttribute('data-deferred-image');
+    };
+    const loadNextSlide = () => loadSlide(slides[(current + 1) % slides.length]);
 
-  const startSlideshow = () => {
-    if (!slides.length) return;
+    const startSlideshow = () => {
+      if (!slides.length) return;
 
-    stopSlideshow();
-    current = 0;
-    gsap.set(slides, { opacity: 0, xPercent: 100, zIndex: 0 });
-    gsap.set(slides[0], { opacity: 1, xPercent: 0, scale: 1.08, zIndex: 1 });
+      stopSlideshow();
+      current = 0;
+      gsap.set(slides, { opacity: 0, xPercent: 100, zIndex: 0 });
+      gsap.set(slides[0], { opacity: 1, xPercent: 0, scale: 1.08, zIndex: 1 });
 
-    if (reduceMotion || slides.length < 2) return;
+      if (reduceMotion || slides.length < 2) return;
 
-    gsap.to(slides[0], { scale: 1, duration: 4.1, ease: 'none' });
-    // 最初の切り替えに間に合うよう、2枚目はページの表示が終わってから読み込む
-    if (document.readyState === 'complete') window.setTimeout(loadNextSlide, 2000);
-    else window.addEventListener('load', () => window.setTimeout(loadNextSlide, 2000), { once: true });
-    // GSAPの時間で次の切り替えを予約する。別のタブを見ている間はGSAPの時間も止まるので、
-    // 戻ったときに切り替えが溜まって一気に動くことはない
-    const showNextSlide = () => {
-      const previous = slides[current];
-      current = (current + 1) % slides.length;
-      const next = slides[current];
+      gsap.to(slides[0], { scale: 1, duration: 4.1, ease: 'none' });
+      // 最初の切り替えに間に合うよう、2枚目はページの表示が終わってから読み込む
+      if (document.readyState === 'complete') window.setTimeout(loadNextSlide, 2000);
+      else
+        window.addEventListener('load', () => window.setTimeout(loadNextSlide, 2000), {
+          once: true,
+        });
+      // GSAPの時間で次の切り替えを予約する。別のタブを見ている間はGSAPの時間も止まるので、
+      // 戻ったときに切り替えが溜まって一気に動くことはない
+      const showNextSlide = () => {
+        const previous = slides[current];
+        current = (current + 1) % slides.length;
+        const next = slides[current];
 
-      loadSlide(next);
-      loadNextSlide();
+        loadSlide(next);
+        loadNextSlide();
 
-      gsap
-        .timeline()
-        .set(next, { opacity: 1, xPercent: 100, scale: 1.08, zIndex: 2 })
-        .to(previous, { xPercent: -100, duration: 1.05, ease: 'power3.inOut' }, 0)
-        .to(next, { xPercent: 0, duration: 1.05, ease: 'power3.inOut' }, 0)
-        .set(previous, { opacity: 0, xPercent: 100, zIndex: 0 })
-        .set(next, { zIndex: 1 })
-        .to(next, { scale: 1, duration: 4.1, ease: 'none' });
+        gsap
+          .timeline()
+          .set(next, { opacity: 1, xPercent: 100, scale: 1.08, zIndex: 2 })
+          .to(previous, { xPercent: -100, duration: 1.05, ease: 'power3.inOut' }, 0)
+          .to(next, { xPercent: 0, duration: 1.05, ease: 'power3.inOut' }, 0)
+          .set(previous, { opacity: 0, xPercent: 100, zIndex: 0 })
+          .set(next, { zIndex: 1 })
+          .to(next, { scale: 1, duration: 4.1, ease: 'none' });
+        slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
+      };
       slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
     };
-    slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
-  };
 
-  startSlideshow();
-  window.addEventListener('pagehide', stopSlideshow);
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) startSlideshow();
-  });
-</script>
+    startSlideshow();
+    window.addEventListener('pagehide', stopSlideshow);
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) startSlideshow();
+    });
+  </script>
+</SiteLayout>
