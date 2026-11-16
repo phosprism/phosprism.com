@@ -2054,7 +2054,9 @@ img {
   font-size: 48px;
   line-height: 1.25;
   letter-spacing: -0.04em;
-  margin: 38px 0 24px;
+  /* 本文（.article-body）と同じ幅にして、左右の端をそろえる */
+  max-width: 760px;
+  margin: 38px auto 24px;
   white-space: normal;
   overflow-wrap: anywhere;
 }
