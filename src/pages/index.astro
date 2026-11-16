@@ -120,7 +120,10 @@ const slides: { src: string; mobile?: string }[] = [
       slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
     };
 
-    startSlideshow();
+    // ローディング画面が出ている間は、スライドの切り替えを始めない
+    if (document.documentElement.classList.contains('is-loading'))
+      document.addEventListener('site-loader:exit', startSlideshow, { once: true });
+    else startSlideshow();
     window.addEventListener('pagehide', stopSlideshow);
     window.addEventListener('pageshow', (event) => {
       if (event.persisted) startSlideshow();

@@ -114,7 +114,11 @@ const repeatedName = Array.from({ length: 7 }, () => member.nameEn);
     } else {
       gsap.set(reveals, { opacity: 0 });
 
-      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      // ローディング画面が出ている間は止めておき、画面が消え始めたら演出を始める
+      const waitForLoader = document.documentElement.classList.contains('is-loading');
+      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: waitForLoader });
+      if (waitForLoader)
+        document.addEventListener('site-loader:exit', () => timeline.play(), { once: true });
       timeline
         .to(intro, { opacity: 0, duration: 0.16, ease: 'none' }, '+=.12')
         .set(glitchTargets, {

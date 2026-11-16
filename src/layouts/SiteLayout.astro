@@ -46,6 +46,8 @@ const utilityPageLabels: Record<string, string> = {
   sitemap: 'SITEMAP',
   error: 'ERROR',
 };
+// ローディング画面で1文字ずつ動かすための文字列
+const loaderLetters = Array.from("Phos'Prism");
 const currentPageLabel =
   navigationItems.find((item) => item.page === currentNavigationPage)?.label ??
   utilityPageLabels[page] ??
@@ -53,7 +55,7 @@ const currentPageLabel =
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-loader={redirectTo ? 'off' : undefined}>
   <head
     ><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta
       name="description"
@@ -111,6 +113,19 @@ const currentPageLabel =
         if (navigation && navigation.type === 'back_forward')
           document.documentElement.classList.add('history-return');
       } catch {}
+      // ローディング画面は、同じタブで最初に開いたページだけに出す（戻る操作・動きを減らす設定・転送ページでは出さない）
+      try {
+        const root = document.documentElement;
+        if (
+          root.dataset.loader !== 'off' &&
+          !root.classList.contains('history-return') &&
+          !matchMedia('(prefers-reduced-motion: reduce)').matches &&
+          !sessionStorage.getItem('phosprism-loader-shown')
+        ) {
+          root.classList.add('is-loading');
+          sessionStorage.setItem('phosprism-loader-shown', '1');
+        }
+      } catch {}
     </script>
     {
       redirectTo && (
@@ -149,6 +164,35 @@ const currentPageLabel =
     }</head
   >
   <body id="top" class={page ? 'inner-body' : 'home-body'}>
+    <div class="site-loader" aria-hidden="true">
+      <div class="site-loader-inner">
+        <p class="site-loader-word">
+          {loaderLetters.map((letter, index) => <span style={`--i: ${index}`}>{letter}</span>)}
+        </p>
+        <span class="site-loader-bar"></span>
+      </div>
+    </div>
+    <script is:inline>
+      // 文字の登場が終わり、ページの読み込みも済んだら閉じる（読み込みが遅くても最長3.5秒で閉じる）
+      (() => {
+        const root = document.documentElement;
+        if (!root.classList.contains('is-loading')) return;
+        let closed = false;
+        const close = () => {
+          if (closed) return;
+          closed = true;
+          root.classList.remove('is-loading');
+          root.classList.add('loader-exit');
+          document.dispatchEvent(new Event('site-loader:exit'));
+          window.setTimeout(() => root.classList.remove('loader-exit'), 900);
+        };
+        const closeAfterMinimum = () =>
+          window.setTimeout(close, Math.max(0, 1700 - performance.now()));
+        if (document.readyState === 'complete') closeAfterMinimum();
+        else window.addEventListener('load', closeAfterMinimum, { once: true });
+        window.setTimeout(close, 3500);
+      })();
+    </script>
     <header class="header">
       <a href="/" class="brand">
         <OptimizedImage
@@ -393,6 +437,13 @@ const currentPageLabel =
               );
           }
         });
+        // ローディング画面が出ている間は入場アニメーションを始めず、画面が消え始めたときに始める
+        const whenLoaderDone = (callback: () => void) => {
+          if (animationRoot.classList.contains('is-loading'))
+            document.addEventListener('site-loader:exit', callback, { once: true });
+          else callback();
+        };
+        whenLoaderDone(() => {
         if (!reduce && !historyReturn && !fallbackRevealed) {
           animateIfPresent(
             '.page-title > *',
@@ -561,6 +612,7 @@ const currentPageLabel =
           document.documentElement.classList.add('article-ready');
         }
         document.documentElement.classList.add('home-animation-ready', 'site-animation-ready');
+        });
         const fadeHistoryReturn = () => {
           document.documentElement.classList.add('history-return');
           const historyTargets = Array.from(

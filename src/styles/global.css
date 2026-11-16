@@ -3771,3 +3771,112 @@ img {
     display: none;
   }
 }
+
+/* ローディング画面（同じタブで最初に開いたページだけ。SiteLayout の is-loading / loader-exit で切り替える） */
+.site-loader {
+  display: none;
+}
+.is-loading,
+.is-loading body {
+  overflow: hidden;
+}
+.is-loading .site-loader,
+.loader-exit .site-loader {
+  position: fixed;
+  z-index: 300;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #050505;
+  color: #fff;
+  pointer-events: none;
+}
+.loader-exit .site-loader {
+  animation: site-loader-exit 0.85s cubic-bezier(0.77, 0, 0.18, 1) forwards;
+}
+.site-loader-inner {
+  display: grid;
+  justify-items: stretch;
+  gap: 18px;
+}
+.loader-exit .site-loader-inner {
+  animation: site-loader-inner-exit 0.6s cubic-bezier(0.55, 0, 0.45, 1) forwards;
+}
+.site-loader-word {
+  display: flex;
+  margin: 0;
+  overflow: hidden;
+  padding: 0.06em 0.04em 0.1em;
+  font-family: Inter, 'Noto Sans JP', sans-serif;
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+}
+.site-loader-word span {
+  display: block;
+  transform: translateY(115%) rotate(6deg);
+  transform-origin: left bottom;
+  animation: site-loader-letter 0.9s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  animation-delay: calc(var(--i) * 55ms + 120ms);
+}
+/* 文字の下で、プリズムの光のように虹色の線が左から伸びて読み込みを表す */
+.site-loader-bar {
+  position: relative;
+  display: block;
+  height: 2px;
+  overflow: hidden;
+  background: #ffffff1f;
+}
+.site-loader-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #ff5f7e, #ffb36b, #f6f37a, #7cf2b0, #66c8ff, #a98bff);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: site-loader-progress 1.3s 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.site-loader-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  transform: translateX(-120%);
+  animation: site-loader-glint 0.9s 1.25s ease-in-out forwards;
+}
+@keyframes site-loader-letter {
+  to {
+    transform: translateY(0) rotate(0);
+  }
+}
+@keyframes site-loader-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes site-loader-glint {
+  to {
+    transform: translateX(400%);
+  }
+}
+@keyframes site-loader-inner-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+@keyframes site-loader-exit {
+  to {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+/* ローディング中はトップのキャッチコピーの演出を止めておき、画面が消えてから流す */
+.is-loading .hero-catchphrase-text,
+.is-loading .hero-catchphrase-line::after {
+  animation-play-state: paused;
+}
