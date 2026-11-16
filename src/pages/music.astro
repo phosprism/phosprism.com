@@ -294,7 +294,8 @@ const initialReleases = releases.filter((release) => release.label === defaultLa
           rotationX: 0,
           rotationY: distance === 0 ? 0 : distance < 0 ? 48 : -48,
           z: -absoluteDistance * 170,
-          opacity: absoluteDistance > 3 ? 0 : 1,
+          // 見えなくなったカバーは visibility: hidden にして描画とクリックの対象から外す
+          autoAlpha: absoluteDistance > 3 ? 0 : 1,
           zIndex: count - absoluteDistance,
           duration: quick ? 0.16 : 0.95,
           ease: quick ? 'power1.out' : 'power3.inOut',

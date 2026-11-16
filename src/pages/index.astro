@@ -54,14 +54,13 @@ const slides: { src: string; mobile?: string }[] = [
 
   const slides = gsap.utils.toArray<HTMLImageElement>('.hero-slide');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const slideInterval = 5.2;
   let current = 0;
-  let slideshowTimer: number | undefined;
+  let slideshowCall: gsap.core.Tween | undefined;
 
   const stopSlideshow = () => {
-    if (slideshowTimer !== undefined) {
-      window.clearInterval(slideshowTimer);
-      slideshowTimer = undefined;
-    }
+    slideshowCall?.kill();
+    slideshowCall = undefined;
     gsap.killTweensOf(slides);
   };
 
@@ -94,9 +93,9 @@ const slides: { src: string; mobile?: string }[] = [
     // 最初の切り替えに間に合うよう、2枚目はページの表示が終わってから読み込む
     if (document.readyState === 'complete') window.setTimeout(loadNextSlide, 2000);
     else window.addEventListener('load', () => window.setTimeout(loadNextSlide, 2000), { once: true });
-    slideshowTimer = window.setInterval(() => {
-      // 別のタブを見ている間は切り替えない（戻ったときに切り替えが溜まって一気に動くのを防ぐ）
-      if (document.hidden) return;
+    // GSAPの時間で次の切り替えを予約する。別のタブを見ている間はGSAPの時間も止まるので、
+    // 戻ったときに切り替えが溜まって一気に動くことはない
+    const showNextSlide = () => {
       const previous = slides[current];
       current = (current + 1) % slides.length;
       const next = slides[current];
@@ -112,7 +111,9 @@ const slides: { src: string; mobile?: string }[] = [
         .set(previous, { opacity: 0, xPercent: 100, zIndex: 0 })
         .set(next, { zIndex: 1 })
         .to(next, { scale: 1, duration: 4.1, ease: 'none' });
-    }, 5200);
+      slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
+    };
+    slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
   };
 
   startSlideshow();

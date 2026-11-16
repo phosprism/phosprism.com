@@ -172,7 +172,19 @@ const repeatedName = Array.from({ length: 7 }, () => member.nameEn);
         ease: 'power2.out',
         clearProps: 'transform,filter,clipPath',
       })
-      .to(otherReveals, { opacity: 1, y: 0, duration: 0.62, stagger: 0.075 }, '-=.08')
+      .fromTo(
+        otherReveals,
+        { opacity: 0, y: 28 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.62,
+          stagger: 0.075,
+          immediateRender: false,
+          clearProps: 'transform',
+        },
+        '-=.08',
+      )
       .call(finishIntro);
   }
 
