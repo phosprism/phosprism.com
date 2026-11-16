@@ -76,52 +76,52 @@ const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
     </article>
     <a class="article-back article-back-bottom" href="/news/">← NEWS一覧へ戻る</a>
   </main>
+
+  <script>
+    const share = document.querySelector<HTMLElement>('.article-share');
+    const copyButton = share?.querySelector<HTMLButtonElement>('.js-copy-article');
+    const shareButton = share?.querySelector<HTMLButtonElement>('.js-share-article');
+    const status = share?.querySelector<HTMLElement>('.article-share-status');
+    const title = share?.dataset.shareTitle ?? document.title;
+    const url = share?.dataset.shareUrl ?? window.location.href;
+    const copyValue = `${title}\n${url}`;
+
+    const showStatus = (message: string) => {
+      if (!status) return;
+      status.textContent = message;
+      window.setTimeout(() => {
+        if (status.textContent === message) status.textContent = '';
+      }, 2200);
+    };
+
+    const copyArticle = async () => {
+      try {
+        await navigator.clipboard.writeText(copyValue);
+      } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = copyValue;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      showStatus('タイトルとURLをコピーしました');
+    };
+
+    copyButton?.addEventListener('click', copyArticle);
+    shareButton?.addEventListener('click', async () => {
+      if (!navigator.share) {
+        await copyArticle();
+        return;
+      }
+      try {
+        await navigator.share({ title, text: title, url });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        showStatus('共有画面を開けませんでした');
+      }
+    });
+  </script>
 </SiteLayout>
-
-<script>
-  const share = document.querySelector<HTMLElement>('.article-share');
-  const copyButton = share?.querySelector<HTMLButtonElement>('.js-copy-article');
-  const shareButton = share?.querySelector<HTMLButtonElement>('.js-share-article');
-  const status = share?.querySelector<HTMLElement>('.article-share-status');
-  const title = share?.dataset.shareTitle ?? document.title;
-  const url = share?.dataset.shareUrl ?? window.location.href;
-  const copyValue = `${title}\n${url}`;
-
-  const showStatus = (message: string) => {
-    if (!status) return;
-    status.textContent = message;
-    window.setTimeout(() => {
-      if (status.textContent === message) status.textContent = '';
-    }, 2200);
-  };
-
-  const copyArticle = async () => {
-    try {
-      await navigator.clipboard.writeText(copyValue);
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = copyValue;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.append(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      textarea.remove();
-    }
-    showStatus('タイトルとURLをコピーしました');
-  };
-
-  copyButton?.addEventListener('click', copyArticle);
-  shareButton?.addEventListener('click', async () => {
-    if (!navigator.share) {
-      await copyArticle();
-      return;
-    }
-    try {
-      await navigator.share({ title, text: title, url });
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      showStatus('共有画面を開けませんでした');
-    }
-  });
-</script>

@@ -87,105 +87,120 @@ const repeatedName = Array.from({ length: 7 }, () => member.nameEn);
       </nav>
     </div>
   </main>
+
+  <script>
+    import gsap from 'gsap';
+
+    const intro = document.querySelector<HTMLElement>('.member-intro');
+    const reveals = gsap.utils.toArray<HTMLElement>('.member-profile .profile-reveal');
+    const glitchTargets = gsap.utils.toArray<HTMLElement>('.profile-glitch-target');
+    const otherReveals = reveals.filter(
+      (item) => !item.classList.contains('profile-glitch-target'),
+    );
+    const leftTrack = document.querySelector<HTMLElement>('.profile-name-track-left');
+    const rightTrack = document.querySelector<HTMLElement>('.profile-name-track-right');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const historyReturn = document.documentElement.classList.contains('history-return');
+
+    const finishIntro = () => {
+      document.documentElement.classList.add('member-intro-complete');
+      document.body.style.removeProperty('overflow');
+      if (intro) intro.style.display = 'none';
+    };
+
+    if (!intro || reduceMotion || historyReturn) {
+      gsap.set(reveals, { opacity: 1, clearProps: 'transform,filter,clipPath' });
+      finishIntro();
+    } else {
+      gsap.set(reveals, { opacity: 0 });
+
+      const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      timeline
+        .to(intro, { opacity: 0, duration: 0.16, ease: 'none' }, '+=.12')
+        .set(glitchTargets, {
+          opacity: 1,
+          clipPath: 'inset(46% 0 46% 0)',
+          filter: 'contrast(3) brightness(1.5)',
+        })
+        .to(glitchTargets, {
+          clipPath: 'inset(6% 0 64% 0)',
+          x: -28,
+          skewX: 5,
+          duration: 0.045,
+          stagger: 0.018,
+          ease: 'steps(1)',
+        })
+        .to(glitchTargets, {
+          clipPath: 'inset(58% 0 8% 0)',
+          x: 25,
+          skewX: -4,
+          filter: 'contrast(4) brightness(0.7) invert(0.18)',
+          duration: 0.05,
+          ease: 'steps(1)',
+        })
+        .to(glitchTargets, {
+          clipPath: 'inset(18% 0 25% 0)',
+          x: -18,
+          scaleX: 1.045,
+          skewX: 3,
+          filter: 'contrast(3.5) brightness(1.8)',
+          duration: 0.045,
+          ease: 'steps(1)',
+        })
+        .to(glitchTargets, {
+          clipPath: 'inset(2% 0 3% 0)',
+          x: 13,
+          scaleX: 0.985,
+          skewX: -2,
+          duration: 0.055,
+          ease: 'steps(2)',
+        })
+        .to(glitchTargets, {
+          clipPath: 'inset(0% 0 0% 0)',
+          x: -7,
+          scaleX: 1.01,
+          skewX: 1,
+          filter: 'contrast(2.2)',
+          duration: 0.06,
+          ease: 'steps(1)',
+        })
+        .to(glitchTargets, {
+          x: 0,
+          scaleX: 1,
+          skewX: 0,
+          filter: 'none',
+          duration: 0.18,
+          ease: 'power2.out',
+          clearProps: 'transform,filter,clipPath',
+        })
+        .fromTo(
+          otherReveals,
+          { opacity: 0, y: 28 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.62,
+            stagger: 0.075,
+            immediateRender: false,
+            clearProps: 'transform',
+          },
+          '-=.08',
+        )
+        .call(finishIntro);
+    }
+
+    if (!reduceMotion) {
+      // スマホ（760px以下）では名前を表示しないので、流すアニメーションも画面幅が広いときだけ動かす
+      gsap.matchMedia().add('(min-width: 761px)', () => {
+        if (leftTrack)
+          gsap.to(leftTrack, { xPercent: -50, duration: 24, repeat: -1, ease: 'none' });
+        if (rightTrack)
+          gsap.fromTo(
+            rightTrack,
+            { xPercent: -50 },
+            { xPercent: 0, duration: 28, repeat: -1, ease: 'none' },
+          );
+      });
+    }
+  </script>
 </SiteLayout>
-
-<script>
-  import gsap from 'gsap';
-
-  const intro = document.querySelector<HTMLElement>('.member-intro');
-  const reveals = gsap.utils.toArray<HTMLElement>('.member-profile .profile-reveal');
-  const glitchTargets = gsap.utils.toArray<HTMLElement>('.profile-glitch-target');
-  const otherReveals = reveals.filter((item) => !item.classList.contains('profile-glitch-target'));
-  const leftTrack = document.querySelector<HTMLElement>('.profile-name-track-left');
-  const rightTrack = document.querySelector<HTMLElement>('.profile-name-track-right');
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const historyReturn = document.documentElement.classList.contains('history-return');
-
-  const finishIntro = () => {
-    document.documentElement.classList.add('member-intro-complete');
-    document.body.style.removeProperty('overflow');
-    if (intro) intro.style.display = 'none';
-  };
-
-  if (!intro || reduceMotion || historyReturn) {
-    gsap.set(reveals, { opacity: 1, clearProps: 'transform,filter,clipPath' });
-    finishIntro();
-  } else {
-    gsap.set(reveals, { opacity: 0 });
-
-    const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    timeline
-      .to(intro, { opacity: 0, duration: 0.16, ease: 'none' }, '+=.12')
-      .set(glitchTargets, {
-        opacity: 1,
-        clipPath: 'inset(46% 0 46% 0)',
-        filter: 'contrast(3) brightness(1.5)',
-      })
-      .to(glitchTargets, {
-        clipPath: 'inset(6% 0 64% 0)',
-        x: -28,
-        skewX: 5,
-        duration: 0.045,
-        stagger: 0.018,
-        ease: 'steps(1)',
-      })
-      .to(glitchTargets, {
-        clipPath: 'inset(58% 0 8% 0)',
-        x: 25,
-        skewX: -4,
-        filter: 'contrast(4) brightness(0.7) invert(0.18)',
-        duration: 0.05,
-        ease: 'steps(1)',
-      })
-      .to(glitchTargets, {
-        clipPath: 'inset(18% 0 25% 0)',
-        x: -18,
-        scaleX: 1.045,
-        skewX: 3,
-        filter: 'contrast(3.5) brightness(1.8)',
-        duration: 0.045,
-        ease: 'steps(1)',
-      })
-      .to(glitchTargets, {
-        clipPath: 'inset(2% 0 3% 0)',
-        x: 13,
-        scaleX: 0.985,
-        skewX: -2,
-        duration: 0.055,
-        ease: 'steps(2)',
-      })
-      .to(glitchTargets, {
-        clipPath: 'inset(0% 0 0% 0)',
-        x: -7,
-        scaleX: 1.01,
-        skewX: 1,
-        filter: 'contrast(2.2)',
-        duration: 0.06,
-        ease: 'steps(1)',
-      })
-      .to(glitchTargets, {
-        x: 0,
-        scaleX: 1,
-        skewX: 0,
-        filter: 'none',
-        duration: 0.18,
-        ease: 'power2.out',
-        clearProps: 'transform,filter,clipPath',
-      })
-      .to(otherReveals, { opacity: 1, y: 0, duration: 0.62, stagger: 0.075 }, '-=.08')
-      .call(finishIntro);
-  }
-
-  if (!reduceMotion) {
-    // スマホ（760px以下）では名前を表示しないので、流すアニメーションも画面幅が広いときだけ動かす
-    gsap.matchMedia().add('(min-width: 761px)', () => {
-      if (leftTrack) gsap.to(leftTrack, { xPercent: -50, duration: 24, repeat: -1, ease: 'none' });
-      if (rightTrack)
-        gsap.fromTo(
-          rightTrack,
-          { xPercent: -50 },
-          { xPercent: 0, duration: 28, repeat: -1, ease: 'none' },
-        );
-    });
-  }
-</script>
