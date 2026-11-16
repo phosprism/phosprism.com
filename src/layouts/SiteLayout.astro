@@ -46,8 +46,9 @@ const utilityPageLabels: Record<string, string> = {
   sitemap: 'SITEMAP',
   error: 'ERROR',
 };
-// ローディング画面を使うか。いったん止めている（true に戻すと、ページを開くたびのローディングとページ移動の幕が復活する）
-const loaderEnabled = false;
+// ローディング画面を使うか。今はテスト環境（test.phosprism.com）だけで出し、本番では止めている
+// （true にすると本番でも、ページを開くたびのローディングとページ移動の幕が出る）
+const loaderEnabled = isStaging;
 const loaderOff = !loaderEnabled || Boolean(redirectTo);
 // ローディング画面で1文字ずつ動かすための文字列
 const loaderLetters = Array.from("Phos'Prism");
