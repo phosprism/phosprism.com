@@ -46,6 +46,9 @@ const utilityPageLabels: Record<string, string> = {
   sitemap: 'SITEMAP',
   error: 'ERROR',
 };
+// ローディング画面を使うか。いったん止めている（true に戻すと、ページを開くたびのローディングとページ移動の幕が復活する）
+const loaderEnabled = false;
+const loaderOff = !loaderEnabled || Boolean(redirectTo);
 // ローディング画面で1文字ずつ動かすための文字列
 const loaderLetters = Array.from("Phos'Prism");
 const currentPageLabel =
@@ -55,7 +58,7 @@ const currentPageLabel =
 ---
 
 <!doctype html>
-<html lang="ja" data-loader={redirectTo ? 'off' : undefined}>
+<html lang="ja" data-loader={loaderOff ? 'off' : undefined}>
   <head
     ><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta
       name="description"
@@ -167,6 +170,7 @@ const currentPageLabel =
     }</head
   >
   <body id="top" class={page ? 'inner-body' : 'home-body'}>
+    {loaderEnabled && (<Fragment>
     <div class="site-loader" aria-hidden="true">
       <p class="site-loader-word">
         <span class="site-loader-layer site-loader-outline">
@@ -226,6 +230,7 @@ const currentPageLabel =
         });
       })();
     </script>
+    </Fragment>)}
     <header class="header">
       <a href="/" class="brand">
         <OptimizedImage
@@ -387,6 +392,31 @@ const currentPageLabel =
           pageScrollLocked = false;
           window.scrollTo(0, pageScrollY);
         };
+        // アニメーションなしでメニューを閉じた状態に戻す
+        const closeMenuNow = () => {
+          if (!menu || !menuIsOpen) return;
+          if (clearMenuItemsTimer !== undefined) {
+            window.clearTimeout(clearMenuItemsTimer);
+            clearMenuItemsTimer = undefined;
+          }
+          menuAnimation?.kill();
+          gsap.killTweensOf(menuItems);
+          menuIsOpen = false;
+          button?.setAttribute('aria-expanded', 'false');
+          button?.setAttribute('aria-label', 'メニューを開く');
+          menu.setAttribute('aria-hidden', 'true');
+          menu.classList.remove('is-open');
+          gsap.set(menuItems, { clearProps: 'opacity,transform' });
+          unlockPageScroll();
+        };
+        // メニューのリンクで移動したあと、ブラウザの「戻る」でこのページに戻ると
+        // 離れたときの状態（メニューが開いたまま）で表示されるため、離れるときと戻ったときに閉じる
+        window.addEventListener('pagehide', (event) => {
+          if (event.persisted) closeMenuNow();
+        });
+        window.addEventListener('pageshow', (event) => {
+          if (event.persisted) closeMenuNow();
+        });
         button?.addEventListener('click', () => {
           if (!menu) return;
           if (clearMenuItemsTimer !== undefined) {
