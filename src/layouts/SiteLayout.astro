@@ -387,6 +387,31 @@ const currentPageLabel =
           pageScrollLocked = false;
           window.scrollTo(0, pageScrollY);
         };
+        // アニメーションなしでメニューを閉じた状態に戻す
+        const closeMenuNow = () => {
+          if (!menu || !menuIsOpen) return;
+          if (clearMenuItemsTimer !== undefined) {
+            window.clearTimeout(clearMenuItemsTimer);
+            clearMenuItemsTimer = undefined;
+          }
+          menuAnimation?.kill();
+          gsap.killTweensOf(menuItems);
+          menuIsOpen = false;
+          button?.setAttribute('aria-expanded', 'false');
+          button?.setAttribute('aria-label', 'メニューを開く');
+          menu.setAttribute('aria-hidden', 'true');
+          menu.classList.remove('is-open');
+          gsap.set(menuItems, { clearProps: 'opacity,transform' });
+          unlockPageScroll();
+        };
+        // メニューのリンクで移動したあと、ブラウザの「戻る」でこのページに戻ると
+        // 離れたときの状態（メニューが開いたまま）で表示されるため、離れるときと戻ったときに閉じる
+        window.addEventListener('pagehide', (event) => {
+          if (event.persisted) closeMenuNow();
+        });
+        window.addEventListener('pageshow', (event) => {
+          if (event.persisted) closeMenuNow();
+        });
         button?.addEventListener('click', () => {
           if (!menu) return;
           if (clearMenuItemsTimer !== undefined) {
