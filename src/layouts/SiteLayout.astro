@@ -46,6 +46,8 @@ const utilityPageLabels: Record<string, string> = {
   sitemap: 'SITEMAP',
   error: 'ERROR',
 };
+// ローディング画面で1文字ずつ動かすための文字列
+const loaderLetters = Array.from("Phos'Prism");
 const currentPageLabel =
   navigationItems.find((item) => item.page === currentNavigationPage)?.label ??
   utilityPageLabels[page] ??
@@ -53,7 +55,7 @@ const currentPageLabel =
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-loader={redirectTo ? 'off' : undefined}>
   <head
     ><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta
       name="description"
@@ -111,6 +113,22 @@ const currentPageLabel =
         if (navigation && navigation.type === 'back_forward')
           document.documentElement.classList.add('history-return');
       } catch {}
+      // ローディング画面はページを開くたびに出す（戻る操作・動きを減らす設定・転送ページでは出さない）
+      // 同じタブで2回目以降は loader-quick を付けて短く流す
+      try {
+        const root = document.documentElement;
+        if (
+          root.dataset.loader !== 'off' &&
+          !root.classList.contains('history-return') &&
+          !matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+          root.classList.add('is-loading');
+          try {
+            if (sessionStorage.getItem('phosprism-loader-shown')) root.classList.add('loader-quick');
+            else sessionStorage.setItem('phosprism-loader-shown', '1');
+          } catch {}
+        }
+      } catch {}
     </script>
     {
       redirectTo && (
@@ -149,6 +167,65 @@ const currentPageLabel =
     }</head
   >
   <body id="top" class={page ? 'inner-body' : 'home-body'}>
+    <div class="site-loader" aria-hidden="true">
+      <p class="site-loader-word">
+        <span class="site-loader-layer site-loader-outline">
+          {loaderLetters.map((letter, index) => <span style={`--i: ${index}`}>{letter}</span>)}
+        </span>
+        <span class="site-loader-layer site-loader-fill">
+          {loaderLetters.map((letter, index) => <span style={`--i: ${index}`}>{letter}</span>)}
+        </span>
+      </p>
+    </div>
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+
+        // 文字の塗りつぶしが終わり、ページの読み込みも済んだら閉じる（読み込みが遅くても最長3.5秒で閉じる）
+        if (root.classList.contains('is-loading')) {
+          let closed = false;
+          const close = () => {
+            if (closed) return;
+            closed = true;
+            root.classList.remove('is-loading');
+            root.classList.add('loader-exit');
+            // 閉じる演出（文字が抜けて画面がめくれる、約1.05秒）が終わってから、ページのアニメーションを始めさせる
+            window.setTimeout(() => {
+              root.classList.remove('loader-exit');
+              document.dispatchEvent(new Event('site-loader:exit'));
+            }, 1080);
+          };
+          const minimum = root.classList.contains('loader-quick') ? 1000 : 1700;
+          const closeAfterMinimum = () =>
+            window.setTimeout(close, Math.max(0, minimum - performance.now()));
+          if (document.readyState === 'complete') closeAfterMinimum();
+          else window.addEventListener('load', closeAfterMinimum, { once: true });
+          window.setTimeout(close, 3500);
+        }
+
+        // サイト内のページへ移動するときは、黒い幕を閉じてから移動する
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        document.addEventListener('click', (event) => {
+          if (event.defaultPrevented || event.button !== 0) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+          if (!link || link.hasAttribute('download')) return;
+          if (link.target && link.target !== '_self') return;
+          const url = new URL(link.href, location.href);
+          if (url.origin !== location.origin) return;
+          // 同じページ内の移動や、RSS・画像などのファイルへのリンクは除く
+          if (url.pathname === location.pathname && url.search === location.search) return;
+          if (url.pathname === '/rss' || /\.[a-z0-9]+$/i.test(url.pathname)) return;
+          event.preventDefault();
+          root.classList.add('loader-enter');
+          window.setTimeout(() => location.assign(url.href), 520);
+        });
+        // ブラウザの「戻る」でこのページに戻ったとき、幕が閉じたままにならないようにする
+        window.addEventListener('pageshow', (event) => {
+          if (event.persisted) root.classList.remove('loader-enter', 'is-loading', 'loader-exit');
+        });
+      })();
+    </script>
     <header class="header">
       <a href="/" class="brand">
         <OptimizedImage
@@ -393,6 +470,16 @@ const currentPageLabel =
               );
           }
         });
+        // ローディング画面が出ている間は入場アニメーションを始めず、画面が消え始めたときに始める
+        const whenLoaderDone = (callback: () => void) => {
+          if (
+            animationRoot.classList.contains('is-loading') ||
+            animationRoot.classList.contains('loader-exit')
+          )
+            document.addEventListener('site-loader:exit', callback, { once: true });
+          else callback();
+        };
+        whenLoaderDone(() => {
         if (!reduce && !historyReturn && !fallbackRevealed) {
           animateIfPresent(
             '.page-title > *',
@@ -561,6 +648,7 @@ const currentPageLabel =
           document.documentElement.classList.add('article-ready');
         }
         document.documentElement.classList.add('home-animation-ready', 'site-animation-ready');
+        });
         const fadeHistoryReturn = () => {
           document.documentElement.classList.add('history-return');
           const historyTargets = Array.from(
