@@ -3772,7 +3772,10 @@ img {
   }
 }
 
-/* ローディング画面（同じタブで最初に開いたページだけ。SiteLayout の is-loading / loader-exit で切り替える） */
+
+/* ローディング画面。SiteLayout が html に付けるクラスで切り替える
+   is-loading: 表示中 / loader-exit: 閉じる演出 / loader-enter: 別ページへ移動する前に幕を閉じる
+   loader-quick: 同じタブで2回目以降（短く流す） */
 .site-loader {
   display: none;
 }
@@ -3781,7 +3784,12 @@ img {
   overflow: hidden;
 }
 .is-loading .site-loader,
-.loader-exit .site-loader {
+.loader-exit .site-loader,
+.loader-enter .site-loader {
+  --loader-rise: 0.9s;
+  --loader-stagger: 55ms;
+  --loader-fill-delay: 0.5s;
+  --loader-fill: 1s;
   position: fixed;
   z-index: 300;
   inset: 0;
@@ -3789,24 +3797,16 @@ img {
   place-items: center;
   background: #050505;
   color: #fff;
-  pointer-events: none;
 }
-.loader-exit .site-loader {
-  animation: site-loader-exit 0.85s cubic-bezier(0.77, 0, 0.18, 1) forwards;
-}
-.site-loader-inner {
-  display: grid;
-  justify-items: stretch;
-  gap: 18px;
-}
-.loader-exit .site-loader-inner {
-  animation: site-loader-inner-exit 0.6s cubic-bezier(0.55, 0, 0.45, 1) forwards;
+.loader-quick .site-loader {
+  --loader-rise: 0.6s;
+  --loader-stagger: 30ms;
+  --loader-fill-delay: 0.25s;
+  --loader-fill: 0.6s;
 }
 .site-loader-word {
-  display: flex;
+  position: relative;
   margin: 0;
-  overflow: hidden;
-  padding: 0.06em 0.04em 0.1em;
   font-family: Inter, 'Noto Sans JP', sans-serif;
   font-size: clamp(2.6rem, 8vw, 6rem);
   font-weight: 800;
@@ -3814,65 +3814,79 @@ img {
   letter-spacing: -0.05em;
   white-space: nowrap;
 }
-.site-loader-word span {
-  display: block;
-  transform: translateY(115%) rotate(6deg);
-  transform-origin: left bottom;
-  animation: site-loader-letter 0.9s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
-  animation-delay: calc(var(--i) * 55ms + 120ms);
-}
-/* 文字の下で、プリズムの光のように虹色の線が左から伸びて読み込みを表す */
-.site-loader-bar {
-  position: relative;
-  display: block;
-  height: 2px;
+.site-loader-layer {
+  display: flex;
   overflow: hidden;
-  background: #ffffff1f;
+  padding: 0.06em 0.04em 0.12em;
 }
-.site-loader-bar::before {
-  content: '';
+/* 輪郭だけの文字 */
+.site-loader-outline span {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6);
+}
+/* 塗りつぶした文字。左から右へ見える範囲を広げて、読み込みの進み具合を表す */
+.site-loader-fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #ff5f7e, #ffb36b, #f6f37a, #7cf2b0, #66c8ff, #a98bff);
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: site-loader-progress 1.3s 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  clip-path: inset(0 100% 0 0);
+  animation: site-loader-fill var(--loader-fill) var(--loader-fill-delay) cubic-bezier(0.65, 0, 0.35, 1)
+    forwards;
 }
-.site-loader-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 30%;
-  background: linear-gradient(90deg, transparent, #fff, transparent);
-  transform: translateX(-120%);
-  animation: site-loader-glint 0.9s 1.25s ease-in-out forwards;
+.site-loader-layer span {
+  display: block;
+  transform: translateY(115%);
+  animation: site-loader-letter-in var(--loader-rise) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  animation-delay: calc(var(--i) * var(--loader-stagger) + 0.1s);
 }
-@keyframes site-loader-letter {
+/* 閉じるとき: 文字が1文字ずつ上へ抜けてから、画面が上へめくれる */
+.loader-exit .site-loader {
+  animation: site-loader-exit 0.75s 0.3s cubic-bezier(0.77, 0, 0.18, 1) forwards;
+}
+.loader-exit .site-loader-fill {
+  clip-path: inset(0 0 0 0);
+  animation: none;
+}
+.loader-exit .site-loader-layer span {
+  transform: translateY(0);
+  animation: site-loader-letter-out 0.45s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  animation-delay: calc(var(--i) * 25ms);
+}
+/* 別ページへ移動する前: 文字は出さず、黒い幕を下から閉じる */
+.loader-enter .site-loader {
+  animation: site-loader-enter 0.5s cubic-bezier(0.77, 0, 0.18, 1) both;
+}
+.loader-enter .site-loader-layer span {
+  animation: none;
+}
+@keyframes site-loader-letter-in {
   to {
-    transform: translateY(0) rotate(0);
+    transform: translateY(0);
   }
 }
-@keyframes site-loader-progress {
+@keyframes site-loader-letter-out {
   to {
-    transform: scaleX(1);
+    transform: translateY(-115%);
   }
 }
-@keyframes site-loader-glint {
+@keyframes site-loader-fill {
   to {
-    transform: translateX(400%);
-  }
-}
-@keyframes site-loader-inner-exit {
-  to {
-    opacity: 0;
-    transform: translateY(-40px);
+    clip-path: inset(0 0 0 0);
   }
 }
 @keyframes site-loader-exit {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
   to {
     clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes site-loader-enter {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }
 /* ローディング中はトップのキャッチコピーの演出を止めておき、画面が消えてから流す */
