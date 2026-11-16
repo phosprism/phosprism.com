@@ -194,11 +194,11 @@ const currentPageLabel =
             closed = true;
             root.classList.remove('is-loading');
             root.classList.add('loader-exit');
-            // 閉じる演出（文字が抜けて画面がめくれる、約1.05秒）が終わってから、ページのアニメーションを始めさせる
+            // 閉じる演出（画面がめくれる、0.75秒）が終わってから、ページのアニメーションを始めさせる
             window.setTimeout(() => {
               root.classList.remove('loader-exit');
               document.dispatchEvent(new Event('site-loader:exit'));
-            }, 1080);
+            }, 780);
           };
           const minimum = root.classList.contains('loader-quick') ? 1000 : 1700;
           const closeAfterMinimum = () =>

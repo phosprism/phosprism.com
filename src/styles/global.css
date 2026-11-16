@@ -3838,9 +3838,9 @@ img {
   animation: site-loader-letter-in var(--loader-rise) cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
   animation-delay: calc(var(--i) * var(--loader-stagger) + 0.1s);
 }
-/* 閉じるとき: 文字が1文字ずつ上へ抜けてから、画面が上へめくれる */
+/* 閉じるとき: 文字は動かさず、画面ごと上へめくれる（動きを重ねない） */
 .loader-exit .site-loader {
-  animation: site-loader-exit 0.75s 0.3s cubic-bezier(0.77, 0, 0.18, 1) forwards;
+  animation: site-loader-exit 0.75s cubic-bezier(0.77, 0, 0.18, 1) forwards;
 }
 .loader-exit .site-loader-fill {
   clip-path: inset(0 0 0 0);
@@ -3848,8 +3848,7 @@ img {
 }
 .loader-exit .site-loader-layer span {
   transform: translateY(0);
-  animation: site-loader-letter-out 0.45s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-  animation-delay: calc(var(--i) * 25ms);
+  animation: none;
 }
 /* 別ページへ移動する前: 文字は出さず、黒い幕を下から閉じる */
 .loader-enter .site-loader {
@@ -3861,11 +3860,6 @@ img {
 @keyframes site-loader-letter-in {
   to {
     transform: translateY(0);
-  }
-}
-@keyframes site-loader-letter-out {
-  to {
-    transform: translateY(-115%);
   }
 }
 @keyframes site-loader-fill {
