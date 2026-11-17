@@ -3,6 +3,7 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import { getCollection, render } from 'astro:content';
 import { assertUniqueNewsSlugs, getNewsDescription, getNewsSlug } from '../../utils/newsSlug';
 import OptimizedImage from '../../components/OptimizedImage.astro';
+import { getNewsLabel } from '../../utils/newsPages';
 
 export async function getStaticPaths() {
   const entries = await getCollection('news');
@@ -21,7 +22,8 @@ const articleUrl = new URL(Astro.url.pathname, Astro.site).href;
 const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
   text: articleTitle,
   url: articleUrl,
-  hashtags: 'ドリレコ',
+  // Dreamy Records のアーカイブ記事だけ、当時のハッシュタグを付ける
+  hashtags: getNewsLabel(entry) === 'dreamy-records' ? 'ドリレコ' : 'フォスプリ',
 })}`;
 ---
 
