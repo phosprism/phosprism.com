@@ -80,19 +80,13 @@ const slides: { src: string; mobile?: string }[] = [
     };
     const loadNextSlide = () => loadSlide(slides[(current + 1) % slides.length]);
 
-    // 1枚目を拡大した状態で置く。ローディング中に先に済ませておき、
-    // 閉じた瞬間に画像の大きさが変わって跳ねて見えないようにする
-    const placeFirstSlide = () => {
+    const startSlideshow = () => {
+      if (!slides.length) return;
+
       stopSlideshow();
       current = 0;
       gsap.set(slides, { opacity: 0, xPercent: 100, zIndex: 0 });
       gsap.set(slides[0], { opacity: 1, xPercent: 0, scale: 1.08, zIndex: 1 });
-    };
-
-    const startSlideshow = ({ placed = false } = {}) => {
-      if (!slides.length) return;
-
-      if (!placed) placeFirstSlide();
 
       if (reduceMotion || slides.length < 2) return;
 
@@ -126,14 +120,7 @@ const slides: { src: string; mobile?: string }[] = [
       slideshowCall = gsap.delayedCall(slideInterval, showNextSlide);
     };
 
-    // ローディング画面が出ている間は、スライドの切り替えを始めない
-    const loaderClasses = document.documentElement.classList;
-    if (loaderClasses.contains('is-loading') || loaderClasses.contains('loader-exit')) {
-      if (slides.length) placeFirstSlide();
-      document.addEventListener('site-loader:exit', () => startSlideshow({ placed: true }), {
-        once: true,
-      });
-    } else startSlideshow();
+    startSlideshow();
     window.addEventListener('pagehide', stopSlideshow);
     window.addEventListener('pageshow', (event) => {
       if (event.persisted) startSlideshow();
