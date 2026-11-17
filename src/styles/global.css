@@ -2103,10 +2103,14 @@ img {
 .article-body p {
   margin: 0 0 28px;
 }
-/* 本文の行の右端と左端をそろえる（両端揃え） */
-.article-body p,
-.article-body li {
-  text-align: justify;
+/* 本文の行の右端と左端をそろえる（両端揃え）。
+   スマホの狭い幅では、メールアドレスやURLなど途中で改行しない語が次の行に回ると、
+   前の行の文字の間が大きく空いてしまうため、パソコンの幅だけにする */
+@media (min-width: 761px) {
+  .article-body p,
+  .article-body li {
+    text-align: justify;
+  }
 }
 .article-body ul,
 .article-body ol {
