@@ -46,7 +46,12 @@ const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
       </header>
       {
         entry.data.image && entry.data.showImage && (
-          <OptimizedImage class="article-image" src={entry.data.image} alt="" loading="lazy" />
+          <OptimizedImage
+            class="article-image"
+            src={entry.data.image}
+            alt={entry.data.title}
+            loading="lazy"
+          />
         )
       }
       <div class="article-body"><Content /></div>

@@ -25,3 +25,22 @@
   # 外部サイトへ送るリファラーをドメインだけにする
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
+
+# 存在しないURLには、サイトのデザインの404ページを返す（Issue #20）
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # iOSがホーム画面のアイコンとして探す /apple-touch-icon.png に、/assets/ のアイコンを返す（Issue #20）
+  RewriteRule ^apple-touch-icon(-precomposed)?\.png$ /assets/apple-touch-icon.png [L]
+
+  # 末尾にスラッシュのないURL（/about など）は、https のスラッシュ付きURLへ301で移動する（Issue #20）
+  # サーバー標準のスラッシュ補完は http:// のURLへ移動させてしまうため止めて、ここで代わりに行う
+  <IfModule mod_dir.c>
+    DirectorySlash Off
+  </IfModule>
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_URI} !/$
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1/ [R=301,L]
+</IfModule>

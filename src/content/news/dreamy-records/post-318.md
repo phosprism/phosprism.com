@@ -13,7 +13,7 @@ description: '平素よりDreamy Recordsを応援いただきまして、誠に�
 
 今後とも、Dreamy Recordsの応援をよろしくお願い申し上げます。
 
-# 期間
+## 期間
 
 11/30 ～ 12/07
 
