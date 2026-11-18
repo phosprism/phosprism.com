@@ -58,6 +58,16 @@ const createTurndown = () => {
       node.classList?.contains('contact-honeypot'),
     replacement: () => '',
   });
+  // 見た目のために文字を分けている部分（キャッチコピーなど）は、data-markdown-text の文章に置き換える
+  turndown.addRule('markdown-text', {
+    filter: (node) => node.hasAttribute?.('data-markdown-text'),
+    replacement: (_content, node) => {
+      const element = node as HTMLElement;
+      const text = element.getAttribute('data-markdown-text') ?? '';
+      const level = /^H([1-6])$/.exec(element.nodeName)?.[1];
+      return `\n\n${level ? `${'#'.repeat(Number(level))} ` : ''}${text}\n\n`;
+    },
+  });
   // 埋め込み動画などは、中身の代わりにリンクとして残す
   turndown.addRule('iframe-link', {
     filter: 'iframe',
