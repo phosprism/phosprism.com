@@ -11,7 +11,16 @@
   <Else>
     # HTMLなどは毎回更新を確認する
     Header set Cache-Control "no-cache"
+    # 同じURLでも Accept によってHTMLとMarkdownを返し分けるため、キャッシュにそれを伝える
+    Header merge Vary "Accept"
   </Else>
+
+  # AIエージェント向けのMarkdown版（index.md）。検索結果にはHTMLのページを出す
+  <FilesMatch "\.md$">
+    Header set X-Robots-Tag "noindex"
+  </FilesMatch>
+  # Markdownのおおよそのトークン数（ビルド時に計算して、振り分けのルールで渡している）
+  Header set x-markdown-tokens "%{REDIRECT_MD_TOKENS}e" env=REDIRECT_MD_TOKENS
 
   # 常にHTTPSで接続させる（1年間）
   Header always set Strict-Transport-Security "max-age=31536000"
@@ -24,6 +33,11 @@
   Header always set X-Content-Type-Options "nosniff"
   # 外部サイトへ送るリファラーをドメインだけにする
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Markdownファイルは文字コード付きの text/markdown として返す
+<IfModule mod_mime.c>
+  AddType "text/markdown; charset=utf-8" .md
 </IfModule>
 
 # 存在しないURLには、サイトのデザインの404ページを返す（Issue #20）
