@@ -34,7 +34,12 @@ const slides: { src: string; mobile?: string }[] = [
     <div class="shade"></div>
     <div class="grain"></div>
     <div class="hero-content">
-      <h1 class="hero-catchphrase">
+      <!-- 「I NTO」の空白は見た目のため。読み上げとMarkdown版では「INTO THE LIGHT.」にする -->
+      <h1
+        class="hero-catchphrase"
+        aria-label="INTO THE LIGHT."
+        data-markdown-text="INTO THE LIGHT."
+      >
         <span class="hero-catchphrase-line hero-catchphrase-line-beyond">
           <span class="hero-catchphrase-text">I NTO</span>
         </span>
