@@ -150,7 +150,12 @@ const initialReleases = releases.filter((release) => release.label === defaultLa
       <small>作品は準備中です。</small>
     </p>
 
-    <section class="coverflow" aria-label="アルバムを選択" hidden={initialReleases.length === 0}>
+    <section
+      class="coverflow"
+      aria-label="アルバムを選択"
+      data-markdown-skip
+      hidden={initialReleases.length === 0}
+    >
       <div class="coverflow-stage">
         <button class="flow-prev flow-side-arrow" type="button" aria-label="前の作品">
           <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
