@@ -2060,10 +2060,12 @@ img {
 .article-image {
   display: block;
   width: 100%;
+  /* タイトル・本文と同じ幅にして、左右の端をそろえる */
+  max-width: 760px;
   height: auto;
   max-height: none;
   object-fit: contain;
-  margin: 65px 0;
+  margin: 65px auto;
 }
 .article-body {
   font-family: 'Noto Sans JP';
@@ -2249,7 +2251,7 @@ img {
     font-size: 13px;
   }
   .article-image {
-    margin: 40px 0;
+    margin: 40px auto;
   }
   .article-body {
     margin: 40px auto;
