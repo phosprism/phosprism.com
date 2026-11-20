@@ -11,6 +11,8 @@ interface Props {
   image?: string;
   noindex?: boolean;
   redirectTo?: string;
+  /** image がないときに、タイトル入りのOGP画像を自動で作る（Phos'Prismのニュース記事だけ） */
+  generateOgImage?: boolean;
 }
 
 const {
@@ -20,16 +22,17 @@ const {
   image,
   noindex = false,
   redirectTo,
+  generateOgImage = false,
 }: Props = Astro.props;
 // 表示を止めないよう、Google Fonts は preload してから読み込み後に適用する
 const googleFontsUrl =
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+JP:wght@400;600;800&display=swap';
-// OGP画像が指定されていないページは、ビルド時にタイトル入りの画像を自動で作る（src/utils/ogp-images.ts）
-// ホームだけはサークルのヘッダー画像を使う
-const homeOgImage = '/assets/phosprism header.png';
-const generatedOgImage = Astro.url.pathname === '/' ? homeOgImage : ogpImagePath(Astro.url.pathname);
+// OGP画像が指定されていないページは共通のヘッダー画像を使う。
+// generateOgImage のページ（Phos'Prismのニュース記事）だけは、ビルド時にタイトル入りの画像を作る（src/utils/ogp-images.ts）
+const defaultOgImage = '/assets/phosprism header.png';
+const fallbackOgImage = generateOgImage ? ogpImagePath(Astro.url.pathname) : defaultOgImage;
 const ogImageBase = import.meta.env.DEV ? Astro.url.origin : Astro.site;
-const ogImage = new URL(image || generatedOgImage, ogImageBase).href;
+const ogImage = new URL(image || fallbackOgImage, ogImageBase).href;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 const isStaging = Astro.site?.hostname === 'test.phosprism.com';
 const navigationItems = [

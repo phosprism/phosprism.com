@@ -3,6 +3,8 @@ title: "Phos'Prism公式サイトへ移行しました。"
 date: 2026-11-06
 category: 'WEBSITE'
 description: "Dreamy Records公式サイトは、Phos'Prism公式サイトへ移行しました。"
+image: '/assets/news/site-migration-ogp.png'
+showImage: true
 ---
 
 Dreamy Records公式サイトは、Phos'Prism公式サイトへ移行しました。

@@ -22,16 +22,27 @@ const WIDTH = 1200;
 const HEIGHT = 630;
 const BACKGROUND = '#070708';
 const TEXT_COLOR = '#F4F3EF';
-const LOGO_HEIGHT = 150;
-const LOGO_MARGIN = 56;
-const TEXT_LEFT = 80;
+// 画像の周りに付ける白い枠（端からの距離と線の太さ）
+const FRAME_INSET = 24;
+const FRAME_WIDTH = 3;
+const LOGO_HEIGHT = 110;
+// 枠の内側に、枠との間をあけてロゴを置く
+const LOGO_MARGIN = 60;
+// ロゴはほぼ正方形なので、重なりの判定では幅も高さと同じとみなす
+const LOGO_LEFT = WIDTH - LOGO_MARGIN - LOGO_HEIGHT;
+const LOGO_TOP = HEIGHT - LOGO_MARGIN - LOGO_HEIGHT;
+// タイトルとロゴのあいだに空ける間隔
+const LOGO_CLEARANCE = 32;
+const TEXT_SIDE = 80;
+// タイトルは画像の上下中央に置き、上下に同じだけ余白をとる
 const TEXT_TOP = 72;
-// タイトルはロゴの少し上までに収め、ロゴと重ならないようにする
-const TEXT_BOTTOM = HEIGHT - LOGO_MARGIN - LOGO_HEIGHT - 40;
-const TEXT_WIDTH = WIDTH - TEXT_LEFT * 2;
+const TEXT_BOTTOM = HEIGHT - TEXT_TOP;
+const TEXT_WIDTH = WIDTH - TEXT_SIDE * 2;
 const LINE_HEIGHT = 1.4;
 const MAX_FONT_SIZE = 88;
 const MIN_FONT_SIZE = 40;
+// かっこの中を改行せずに収めるために、ここまでは文字を小さくしてよい
+const BRACKET_KEEP_MIN_FONT_SIZE = 56;
 
 const SITE_SUFFIX = / — Phos'Prism$/;
 
@@ -47,6 +58,9 @@ const NO_LINE_START =
   /^[、。，．,.・：:；;！!？?）)」』】〕〉》ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々〜～…]/;
 
 const OPENING_BRACKET = /^[【「『（〔〈《［｛]/;
+const CLOSING_PUNCTUATION = /[】」』）〕〉》］｝。、]$/;
+// タイトルの先頭にある【〜】の見出し
+const LEADING_LABEL = /^\s*【[^】]*】/;
 
 const parser = loadDefaultJapaneseParser();
 
@@ -72,22 +86,71 @@ export const splitPhrases = (title: string) => {
 
 type Layout = { fontSize: number; lines: string[] };
 
+/** 「」『』（）の中にある文節を1つにつなげ、かっこの中で改行しないようにする */
+const joinBracketedPhrases = (phrases: string[]) => {
+  const joined: string[] = [];
+  let depth = 0;
+  for (const phrase of phrases) {
+    if (depth > 0) joined[joined.length - 1] += phrase;
+    else joined.push(phrase);
+    for (const char of phrase) {
+      if ('「『（(【'.includes(char)) depth += 1;
+      if ('」』）)】'.includes(char)) depth = Math.max(0, depth - 1);
+    }
+  }
+  return joined;
+};
+
+/** 上下中央に置いたときの、タイトルのかたまりの上端 */
+const blockTop = (lineCount: number, fontSize: number) =>
+  (HEIGHT - fontSize * LINE_HEIGHT * lineCount) / 2;
+
+/** 中央に並べた行のどれかが、右下のロゴ（と周りの間隔）にかかるか */
+const overlapsLogo = (font: opentype.Font, lines: string[], fontSize: number) => {
+  const lineHeight = fontSize * LINE_HEIGHT;
+  const top = blockTop(lines.length, fontSize);
+  return lines.some((line, index) => {
+    const bottom = top + lineHeight * (index + 1);
+    const right = (WIDTH + font.getAdvanceWidth(line, fontSize)) / 2;
+    return bottom > LOGO_TOP - LOGO_CLEARANCE && right > LOGO_LEFT - LOGO_CLEARANCE;
+  });
+};
+
 /** 文字の大きさを大きい順に試し、文節の区切りで改行して枠に収まる最大の大きさを選ぶ */
 const layoutTitle = (font: opentype.Font, title: string): Layout => {
-  const phrases = splitPhrases(title);
+  // 先頭の【出演情報】などの見出しは、それだけで1行にする
+  const label = title.match(LEADING_LABEL)?.[0].trim();
+  const body = label ? title.slice(title.indexOf(label) + label.length).trim() : title;
+  const labelLines = label ? [label] : [];
+  const phrases = splitPhrases(body);
   const measure = (text: string, size: number) => font.getAdvanceWidth(text.trimEnd(), size);
 
-  for (let fontSize = MAX_FONT_SIZE; fontSize >= MIN_FONT_SIZE; fontSize -= 2) {
-    const maxLines = Math.floor((TEXT_BOTTOM - TEXT_TOP) / (fontSize * LINE_HEIGHT));
-    const lines = breakLines(phrases, (text) => measure(text, fontSize), maxLines);
-    if (lines) return { fontSize, lines };
+  // まず「」などの中を改行しない分け方で、ある程度の大きさまで試す。
+  // 収まらないときだけ、かっこの中でも改行してよいことにする
+  const attempts = [
+    { phrases: joinBracketedPhrases(phrases), minFontSize: BRACKET_KEEP_MIN_FONT_SIZE },
+    { phrases, minFontSize: MIN_FONT_SIZE },
+  ];
+  for (const attempt of attempts) {
+    for (let fontSize = MAX_FONT_SIZE; fontSize >= attempt.minFontSize; fontSize -= 2) {
+      const maxLines = Math.floor((TEXT_BOTTOM - TEXT_TOP) / (fontSize * LINE_HEIGHT));
+      if (label && measure(label, fontSize) > TEXT_WIDTH) continue;
+      const bodyLines = breakLines(
+        attempt.phrases,
+        (text) => measure(text, fontSize),
+        maxLines - labelLines.length,
+      );
+      if (!bodyLines) continue;
+      const lines = [...labelLines, ...bodyLines];
+      if (!overlapsLogo(font, lines, fontSize)) return { fontSize, lines };
+    }
   }
 
   // 最小の大きさでも収まらない長いタイトルは、文字単位で折り返して最後を「…」で切る
   const fontSize = MIN_FONT_SIZE;
   const maxLines = Math.floor((TEXT_BOTTOM - TEXT_TOP) / (fontSize * LINE_HEIGHT));
-  const lines: string[] = [''];
-  for (const char of title) {
+  const lines: string[] = [...labelLines, ''];
+  for (const char of body) {
     const current = lines[lines.length - 1];
     if (measure(current + char, fontSize) > TEXT_WIDTH) {
       if (lines.length === maxLines) {
@@ -208,9 +271,8 @@ const toPathData = (glyphPath: opentype.Path) => {
 const renderImage = async (font: opentype.Font, logo: Buffer, title: string) => {
   const { fontSize, lines } = layoutTitle(font, title);
   const lineHeight = fontSize * LINE_HEIGHT;
-  // タイトルのかたまりを、使える高さの中で上下中央に置く
-  const blockHeight = lineHeight * lines.length;
-  const top = TEXT_TOP + Math.max(0, (TEXT_BOTTOM - TEXT_TOP - blockHeight) / 2);
+  // タイトルのかたまりを、画像の上下中央に置く
+  const top = blockTop(lines.length, fontSize);
   const ascender = (font.ascender / font.unitsPerEm) * fontSize;
   const descender = (-font.descender / font.unitsPerEm) * fontSize;
   const halfLeading = (lineHeight - (ascender + descender)) / 2;
@@ -219,13 +281,18 @@ const renderImage = async (font: opentype.Font, logo: Buffer, title: string) => 
   const paths = lines
     .map((line, index) => {
       const baseline = top + lineHeight * index + halfLeading + ascender;
-      // 【「（ などで始まる行は、かっこの左側の余白（半角分）を詰めて、ほかの行と左端をそろえる
-      const left = OPENING_BRACKET.test(line) ? TEXT_LEFT - fontSize / 2 : TEXT_LEFT;
+      // 各行を左右中央に置く。【「（ で始まる行や 】」。で終わる行は、
+      // かっこや句点の外側の余白（半角分）を除いた見た目の幅で中央をとる
+      const leading = OPENING_BRACKET.test(line) ? fontSize / 2 : 0;
+      const trailing = CLOSING_PUNCTUATION.test(line) ? fontSize / 2 : 0;
+      const visibleWidth = font.getAdvanceWidth(line, fontSize) - leading - trailing;
+      const left = (WIDTH - visibleWidth) / 2 - leading;
       return toPathData(font.getPath(line, left, baseline, fontSize));
     })
     .join(' ');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}">
   <title>${escapeXml(title)}</title>
+  <rect x="${FRAME_INSET}" y="${FRAME_INSET}" width="${WIDTH - FRAME_INSET * 2}" height="${HEIGHT - FRAME_INSET * 2}" fill="none" stroke="${TEXT_COLOR}" stroke-width="${FRAME_WIDTH}"/>
   <path d="${paths}" fill="${TEXT_COLOR}"/>
 </svg>`;
 
@@ -243,6 +310,23 @@ const renderImage = async (font: opentype.Font, logo: Buffer, title: string) => 
     ])
     .png({ compressionLevel: 9 })
     .toBuffer();
+};
+
+const loadFont = async () => {
+  const fontFile = await readFile(fontPath);
+  return opentype.parse(
+    fontFile.buffer.slice(fontFile.byteOffset, fontFile.byteOffset + fontFile.byteLength),
+  );
+};
+
+/**
+ * タイトル入りの画像を作る関数を返す（フォントとロゴの読み込みは1回だけ）。
+ * scripts/generate-news-ogp.mjs からも使う
+ */
+export const createTitleImageRenderer = async () => {
+  const font = await loadFont();
+  const logo = await createLogo();
+  return (title: string) => renderImage(font, logo, title);
 };
 
 export const ogpImages = (): AstroIntegration => ({
@@ -263,15 +347,11 @@ export const ogpImages = (): AstroIntegration => ({
         targets.set(decodeURI(image), decodeEntities(title).replace(SITE_SUFFIX, ''));
       }
 
-      const fontFile = await readFile(fontPath);
-      const font = opentype.parse(
-        fontFile.buffer.slice(fontFile.byteOffset, fontFile.byteOffset + fontFile.byteLength),
-      );
-      const logo = await createLogo();
+      const render = await createTitleImageRenderer();
       for (const [image, title] of targets) {
         const output = path.join(distDir, image);
         await mkdir(path.dirname(output), { recursive: true });
-        await sharp(await renderImage(font, logo, title)).toFile(output);
+        await sharp(await render(title)).toFile(output);
       }
       logger.info(`${targets.size} ページのOGP画像を作りました`);
     },
