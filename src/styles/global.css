@@ -2226,12 +2226,62 @@ img {
 .icon-action i {
   font-size: 14px;
 }
+/* 読み上げ用。見た目はボタンの上の吹き出しで知らせる */
 .article-share-status {
-  min-height: 1.5em;
-  margin: 12px 0 0;
-  color: #ccc;
-  font-size: 10px;
-  letter-spacing: 0.05em;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.article-share-buttons > * {
+  position: relative;
+}
+.article-share-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 2;
+  padding: 7px 12px;
+  border: 1px solid #fff;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.article-share-bubble::before,
+.article-share-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border: 6px solid transparent;
+  transform: translateX(-50%);
+}
+/* しっぽ：白い三角の上に黒い三角を1px上へずらして重ね、白い縁だけ残す */
+.article-share-bubble::before {
+  border-top-color: #fff;
+}
+.article-share-bubble::after {
+  margin-top: -1px;
+  border-top-color: #000;
+}
+.article-share-bubble.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .article-share-bubble {
+    transition: none;
+  }
 }
 .article-back-bottom {
   margin-top: 30px;
