@@ -12,3 +12,6 @@ agent.md
 src/assets/
 # Claude Code の個人設定（スキルは .claude/skills/ でGit管理する）
 .claude/settings.local.json
+
+# OGP画像の確認用（手元だけ）
+.ogp-preview/
