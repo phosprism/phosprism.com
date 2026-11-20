@@ -18,6 +18,8 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      HAS_URL_SHORTENER_KEY: ${{ secrets.URL_SHORTENER_API_KEY != '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -30,6 +32,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # ニュースの短縮URLを発行（または発行済みのものを取得）して、記事に書き込んでからビルドする。
+      # APIキーは Repository secret の URL_SHORTENER_API_KEY。未登録やAPIの不調のときは、
+      # 短縮URLなしでビルドを続ける（シェアボタンは通常のURLになる）
+      - name: Issue short URLs for news
+        if: env.HAS_URL_SHORTENER_KEY == 'true'
+        continue-on-error: true
+        env:
+          URL_SHORTENER_API_KEY: ${{ secrets.URL_SHORTENER_API_KEY }}
+        run: node scripts/shorten-news-urls.mjs
 
       - name: Build staging site
         env:
@@ -57,6 +69,7 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       PRODUCTION_PATH: ${{ secrets.PRODUCTION_PATH }}
+      HAS_URL_SHORTENER_KEY: ${{ secrets.URL_SHORTENER_API_KEY != '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -69,6 +82,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # ニュースの短縮URLを発行（または発行済みのものを取得）して、記事に書き込んでからビルドする。
+      # APIキーは Repository secret の URL_SHORTENER_API_KEY。未登録やAPIの不調のときは、
+      # 短縮URLなしでビルドを続ける（シェアボタンは通常のURLになる）
+      - name: Issue short URLs for news
+        if: env.HAS_URL_SHORTENER_KEY == 'true'
+        continue-on-error: true
+        env:
+          URL_SHORTENER_API_KEY: ${{ secrets.URL_SHORTENER_API_KEY }}
+        run: node scripts/shorten-news-urls.mjs
 
       - name: Build production site
         env:

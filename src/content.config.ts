@@ -16,6 +16,8 @@ const news = defineCollection({
     image: z.string().optional(),
     showImage: z.boolean().default(false),
     redirectTo: z.string().url().optional(),
+    // シェア用の短縮URL（scripts/shorten-news-urls.mjs が発行して書き込む）
+    shortUrl: z.string().url().optional(),
   }),
 });
 

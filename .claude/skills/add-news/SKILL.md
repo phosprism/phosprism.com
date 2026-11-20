@@ -76,6 +76,15 @@ npm run ogp:news -- {ファイル名}
 - 引数なしの `npm run ogp:news` は、image のない Phos'Prism の記事すべてに設定する。
 - 設定を忘れても、ビルド時に同じデザインのOGP画像が自動で作られる（`/ogp/news/{ファイル名}.png`）。ただしアイキャッチは出ないので、記事を作るときは上のコマンドで設定する。
 
+## 4.6 シェア用の短縮URL（Phos'Prism の記事）
+
+記事の「Xでシェア」「タイトルとURLをコピー」「その他のシェア」は、短縮URL（pspr.me）を使う。
+
+- 短縮URLは、デプロイのたびにGitHub Actionsが自動で発行する（`scripts/shorten-news-urls.mjs`、キーは Repository secret の `URL_SHORTENER_API_KEY`）。記事を追加するときに何かする必要はない。
+- 発行済みの記事は同じ短縮URLを使い回す。記事のファイル名（URL）を変えると、新しい短縮URLが発行される。
+- 手元で発行して frontmatter に `shortUrl` を書き込むこともできる（`.env` にキーが必要）: `npm run short-url:news -- {ファイル名}`。`shortUrl` が書かれた記事は、デプロイ時もそれを使う。
+- APIキーはチャット・Git・ブラウザで動くコードに絶対に書かない。
+
 ## 5. 確認
 
 ```bash
