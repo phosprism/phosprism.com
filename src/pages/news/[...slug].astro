@@ -19,9 +19,11 @@ const date = entry.data.date
 const articleTitle = entry.data.title;
 const articleDescription = getNewsDescription(entry);
 const articleUrl = new URL(Astro.url.pathname, Astro.site).href;
+// シェア用のURL。短縮URL（npm run short-url:news で発行）があればそれを使う
+const shareUrl = entry.data.shortUrl ?? articleUrl;
 const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
   text: articleTitle,
-  url: articleUrl,
+  url: shareUrl,
   // Dreamy Records のアーカイブ記事だけ、当時のハッシュタグを付ける
   hashtags: getNewsLabel(entry) === 'dreamy-records' ? 'ドリレコ' : 'フォスプリ',
 })}`;
@@ -63,7 +65,7 @@ const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
         class="article-share"
         aria-label="この記事をシェア"
         data-share-title={articleTitle}
-        data-share-url={articleUrl}
+        data-share-url={shareUrl}
       >
         <p>SHARE THIS ARTICLE</p>
         <div class="article-share-buttons">
