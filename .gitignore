@@ -9,5 +9,6 @@ npm-debug.log*
 CLAUDE.md
 SITE_GUERD.md
 agent.md
-design.md
 src/assets/
+# Claude Code の個人設定（スキルは .claude/skills/ でGit管理する）
+.claude/settings.local.json
