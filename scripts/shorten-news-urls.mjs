@@ -5,9 +5,10 @@
 //   npm run short-url:news -- c110    … 指定した記事だけ（ファイル名。.md は省略可）
 //
 // APIキーは、Git管理外の .env に書く（.env.example を参照）。接続先は https://api.pspr.me。
+// 短縮URLのドメインは nw.pspr.me（短縮URLサービスの管理画面の「ドメイン」に追加済みのもの）。
 // キーは管理者用なので、ブラウザで動くコードやGitには絶対に入れない。
 // 短縮するのは本番のURL（https://phosprism.com/news/{ファイル名}/）。
-// 同じURLの短縮URLがすでにあれば、新しく作らずにそれを使う。
+// 同じURL・同じドメインの短縮URLがすでにあれば、新しく作らずにそれを使う。
 // Dreamy Records のアーカイブ記事と、redirectTo のある記事は対象外。
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -17,6 +18,7 @@ const newsDir = 'src/content/news';
 
 const apiBase = (process.env.URL_SHORTENER_API_BASE || 'https://api.pspr.me').replace(/\/$/, '');
 const apiKey = process.env.URL_SHORTENER_API_KEY;
+const shortDomain = process.env.URL_SHORTENER_DOMAIN || 'nw.pspr.me';
 if (!apiBase || !apiKey) {
   console.error('.env に URL_SHORTENER_API_KEY を設定してください（.env.example を参照）');
   process.exit(1);
@@ -40,13 +42,19 @@ const api = async (method, pathname, body) => {
   return json;
 };
 
-/** これまでに発行した短縮URLを、元のURLごとにまとめる（同じURLを二重に発行しないため） */
+/** これまでに発行した短縮URLを、元のURLごとにまとめる（同じURLを二重に発行しないため）。
+ *  別のドメイン（以前の pspr.me など）で発行したものは使わない */
 const loadExistingLinks = async () => {
   const links = new Map();
   for (let page = 1; page <= 100; page += 1) {
     const { data = [] } = await api('GET', `/v1/links?page=${page}`);
     for (const link of data) {
-      if (!link.expired && !link.password_protected && !links.has(link.original_url)) {
+      if (
+        link.domain === shortDomain &&
+        !link.expired &&
+        !link.password_protected &&
+        !links.has(link.original_url)
+      ) {
         links.set(link.original_url, link.short_url);
       }
     }
@@ -91,7 +99,7 @@ for (const name of files) {
   if (shortUrl) {
     console.log(`${name}: 発行済みの ${shortUrl} を使います`);
   } else {
-    const { data } = await api('POST', '/v1/links', { url: articleUrl });
+    const { data } = await api('POST', '/v1/links', { url: articleUrl, domain: shortDomain });
     shortUrl = data.short_url;
     console.log(`${name}: ${shortUrl} を発行しました（${articleUrl}）`);
   }

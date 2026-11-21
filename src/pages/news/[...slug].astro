@@ -97,15 +97,31 @@ const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
     const url = share?.dataset.shareUrl ?? window.location.href;
     const copyValue = `${title}\n${url}`;
 
-    const showStatus = (message: string) => {
-      if (!status) return;
-      status.textContent = message;
-      window.setTimeout(() => {
-        if (status.textContent === message) status.textContent = '';
-      }, 2200);
+    // 押したボタンの上に吹き出しを出す（読み上げは status 側で行う）
+    const showStatus = (message: string, button?: HTMLButtonElement | null) => {
+      if (status) {
+        status.textContent = message;
+        window.setTimeout(() => {
+          if (status.textContent === message) status.textContent = '';
+        }, 2200);
+      }
+      if (!button) return;
+      let bubble = button.querySelector<HTMLElement>('.article-share-bubble');
+      if (!bubble) {
+        bubble = document.createElement('span');
+        bubble.className = 'article-share-bubble';
+        bubble.setAttribute('aria-hidden', 'true');
+        button.append(bubble);
+      }
+      bubble.textContent = message;
+      window.clearTimeout(Number(bubble.dataset.timer));
+      bubble.classList.add('is-visible');
+      bubble.dataset.timer = String(
+        window.setTimeout(() => bubble?.classList.remove('is-visible'), 2200),
+      );
     };
 
-    const copyArticle = async () => {
+    const copyArticle = async (button?: HTMLButtonElement | null) => {
       try {
         await navigator.clipboard.writeText(copyValue);
       } catch {
@@ -118,20 +134,20 @@ const xShareUrl = `https://x.com/intent/post?${new URLSearchParams({
         document.execCommand('copy');
         textarea.remove();
       }
-      showStatus('タイトルとURLをコピーしました');
+      showStatus('コピーしました', button);
     };
 
-    copyButton?.addEventListener('click', copyArticle);
+    copyButton?.addEventListener('click', () => copyArticle(copyButton));
     shareButton?.addEventListener('click', async () => {
       if (!navigator.share) {
-        await copyArticle();
+        await copyArticle(shareButton);
         return;
       }
       try {
         await navigator.share({ title, text: title, url });
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        showStatus('共有画面を開けませんでした');
+        showStatus('共有画面を開けませんでした', shareButton);
       }
     });
   </script>
